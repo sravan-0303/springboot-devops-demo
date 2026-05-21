@@ -42,7 +42,7 @@ pipeline {
         sh '''
         curl -v -u admin:admin123 \
         --upload-file target/demo-0.0.1-SNAPSHOT.war \
-        http://192.168.x.x:30081/repository/maven-releases/demo.war
+        http://192.168.0.6:30081/repository/maven-releases/demo.war
         '''
     }
 }
