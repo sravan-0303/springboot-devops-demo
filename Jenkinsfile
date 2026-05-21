@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url:'https://github.com/sravan-0303/springboot-devops-demo.git'
+                url: 'https://github.com/sravan-0303/springboot-devops-demo.git'
             }
         }
 
@@ -37,21 +37,22 @@ pipeline {
             }
         }
 
-       stage('Upload WAR to Nexus') {
-           steps {
-                  sh '''
-                  curl -v -u admin:admin123 \
-                  --upload-file target/demo-0.0.1-SNAPSHOT.war \
-                  http://192.168.0.6:30081/repository/maven-releases/demo.war
-                 '''
-     }
-}
+        stage('Upload WAR to Nexus') {
+            steps {
+                sh '''
+                curl -v -u admin:admin123 \
+                --upload-file target/demo-0.0.1-SNAPSHOT.war \
+                http://192.168.0.6:30081/repository/maven-releases/demo.war
+                '''
+            }
+        }
+
         stage('Deploy to Tomcat') {
             steps {
                 sh '''
-                POD=$(kubectl get pod -l app=tomcat -o jsonpath="{.items[0].metadata.name}")
+                POD=$(kubectl get pods -l app=tomcat -o jsonpath="{.items[0].metadata.name}")
 
-                kubectl cp target/demo-0.0.1-SNAPSHOT.war default/$POD:/usr/local/tomcat/webapps/demo.war
+                kubectl cp target/demo-0.0.1-SNAPSHOT.war $POD:/usr/local/tomcat/webapps/demo.war
                 '''
             }
         }
