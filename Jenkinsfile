@@ -7,11 +7,13 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
+        IMAGE_NAME = "tomcat-app"
+        DOCKERHUB_USER = "your-dockerhub-username"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main',
                 url: 'https://github.com/sravan-0303/springboot-devops-demo.git'
@@ -20,7 +22,7 @@ pipeline {
 
         stage('Build WAR') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -43,18 +45,32 @@ pipeline {
             }
         }
 
-        stage('Deploy to Tomcat') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
-                POD=$(kubectl get pods -n jenkins -l app=tomcat -o jsonpath="{.items[0].metadata.name}")
+                docker build -t $sravan0303/$IMAGE_NAME:latest .
+                '''
+            }
+        }
 
-                if [ -z "$POD" ]; then
-                  echo "Tomcat pod not found"
-                  exit 1
-                fi
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+                    '''
+                }
+            }
+        }
 
-                kubectl cp -n jenkins target/demo-0.0.1-SNAPSHOT.war \
-                $POD:/usr/local/tomcat/webapps/demo.war
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                kubectl set image deployment/tomcat \
+                tomcat=$DOCKERHUB_USER/$IMAGE_NAME:latest -n jenkins
+
+                kubectl rollout status deployment/tomcat -n jenkins
                 '''
             }
         }
