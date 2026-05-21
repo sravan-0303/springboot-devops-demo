@@ -50,9 +50,8 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 sh '''
-                POD=$(kubectl get pods -l app=tomcat -o jsonpath="{.items[0].metadata.name}")
-
-                kubectl cp target/demo-0.0.1-SNAPSHOT.war $POD:/usr/local/tomcat/webapps/demo.war
+                POD=$(kubectl get pods -n jenkins -l app=tomcat -o jsonpath="{.items[0].metadata.name}")
+                kubectl cp -n jenkins target/demo-0.0.1-SNAPSHOT.war $POD:/usr/local/tomcat/webapps/demo.war
                 '''
             }
         }
