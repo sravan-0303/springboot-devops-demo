@@ -37,28 +37,15 @@ pipeline {
             }
         }
 
-        stage('Upload WAR to Nexus') {
-            steps {
-                nexusArtifactUploader(
-                    nexusVersion: 'nexus3',
-                    protocol: 'http',
-                    nexusUrl: 'nexus-service.default.svc.cluster.local:8081',
-                    groupId: 'com.example',
-                    version: '0.0.1',
-                    repository: 'maven-releases',
-                    credentialsId: 'nexus-creds',
-                    artifacts: [
-                        [
-                            artifactId: 'demo',
-                            classifier: '',
-                            file: 'target/demo-0.0.1-SNAPSHOT.war',
-                            type: 'war'
-                        ]
-                    ]
-                )
-            }
-        }
-
+       stage('Upload WAR to Nexus') {
+    steps {
+        sh '''
+        curl -v -u admin:admin123 \
+        --upload-file target/demo-0.0.1-SNAPSHOT.war \
+        http://nexus-service.default.svc.cluster.local:8081/repository/maven-releases/demo.war
+        '''
+      }
+    }
         stage('Deploy to Tomcat') {
             steps {
                 sh '''
