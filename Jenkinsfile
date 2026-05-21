@@ -42,10 +42,10 @@ pipeline {
         sh '''
         curl -v -u admin:admin123 \
         --upload-file target/demo-0.0.1-SNAPSHOT.war \
-        http://nexus-service.default.svc.cluster.local:8081/repository/maven-releases/demo.war
+        http://192.168.x.x:30081/repository/maven-releases/demo.war
         '''
-      }
     }
+}
         stage('Deploy to Tomcat') {
             steps {
                 sh '''
