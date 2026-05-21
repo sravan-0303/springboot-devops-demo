@@ -39,11 +39,7 @@ pipeline {
 
         stage('Upload WAR to Nexus') {
             steps {
-                sh '''
-                curl -v -u admin:admin@123 \
-                --upload-file target/demo-0.0.1-SNAPSHOT.war \
-                http://192.168.0.6:30081/repository/maven-releases/demo.war
-                '''
+                sh 'mvn deploy -DskipTests'
             }
         }
 
@@ -51,7 +47,14 @@ pipeline {
             steps {
                 sh '''
                 POD=$(kubectl get pods -n jenkins -l app=tomcat -o jsonpath="{.items[0].metadata.name}")
-                kubectl cp -n jenkins target/demo-0.0.1-SNAPSHOT.war $POD:/usr/local/tomcat/webapps/demo.war
+
+                if [ -z "$POD" ]; then
+                  echo "Tomcat pod not found"
+                  exit 1
+                fi
+
+                kubectl cp -n jenkins target/demo-0.0.1-SNAPSHOT.war \
+                $POD:/usr/local/tomcat/webapps/demo.war
                 '''
             }
         }
