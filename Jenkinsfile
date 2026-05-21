@@ -38,13 +38,13 @@ pipeline {
         }
 
        stage('Upload WAR to Nexus') {
-    steps {
-        sh '''
-        curl -v -u admin:admin123 \
-        --upload-file target/demo-0.0.1-SNAPSHOT.war \
-        http://192.168.0.6:30081/repository/maven-releases/demo.war
-        '''
-    }
+           steps {
+                  sh '''
+                  curl -v -u admin:admin123 \
+                  --upload-file target/demo-0.0.1-SNAPSHOT.war \
+                  http://192.168.0.6:30081/repository/maven-releases/demo.war
+                 '''
+     }
 }
         stage('Deploy to Tomcat') {
             steps {
