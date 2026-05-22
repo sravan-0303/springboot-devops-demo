@@ -8,7 +8,7 @@ pipeline {
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
         IMAGE_NAME = "tomcat-app"
-        DOCKERHUB_USER = "your-dockerhub-username"
+        DOCKERHUB_USER = "sravan0303"
     }
 
     stages {
@@ -20,58 +20,52 @@ pipeline {
             }
         }
 
-        stage('Build WAR') {
+        stage('Build + Upload to Nexus') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean deploy -DskipTests'
             }
         }
 
         stage('SonarQube Scan') {
             steps {
                 withSonarQubeEnv('sonarqube') {
-                    sh '''
+                    sh """
                     $SCANNER_HOME/bin/sonar-scanner \
                     -Dsonar.projectKey=demo \
                     -Dsonar.sources=. \
                     -Dsonar.java.binaries=target/classes
-                    '''
+                    """
                 }
-            }
-        }
-
-        stage('Upload WAR to Nexus') {
-            steps {
-                sh 'mvn deploy -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build -t $sravan0303/$IMAGE_NAME:latest .
-                '''
+                sh """
+                docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .
+                """
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh '''
+                    sh """
                     echo $PASS | docker login -u $USER --password-stdin
                     docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
-                    '''
+                    """
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
+                sh """
                 kubectl set image deployment/tomcat \
                 tomcat=$DOCKERHUB_USER/$IMAGE_NAME:latest -n jenkins
 
                 kubectl rollout status deployment/tomcat -n jenkins
-                '''
+                """
             }
         }
     }
